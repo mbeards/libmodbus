@@ -2,8 +2,12 @@ load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 
 cc_library(
     name = "libmodbus",
-    srcs = glob(["src/*.c"]) + [":generate_modbus_version_h"],
+    srcs = glob(["src/*.c"]) + [
+        ":generate_config_h",
+        ":generate_modbus_version_h",
+    ],
     hdrs = glob(["src/*.h"]),
+    copts = ["-DHAVE_CONFIG_H"],
     includes = ["src"],
 )
 
@@ -17,4 +21,18 @@ expand_template(
         "@LIBMODBUS_VERSION@": "1.2.3",
     },
     template = "src/modbus-version.h.in",
+)
+
+genrule(
+    name = "generate_config_h",
+    outs = ["src/config.h"],
+    cmd = """cat > $@ <<EOF
+#define HAVE_STRLCPY 1
+#define HAVE_DECL_TIOCM_RTS 1
+#define HAVE_DECL_TIOCSRS485 1
+#undef HAVE_ACCEPT4
+#undef HAVE_GAI_STRERROR
+#define HAVE_NETINET_IN_H 1
+#define HAVE_NETINET_IP_H 1
+""",
 )
