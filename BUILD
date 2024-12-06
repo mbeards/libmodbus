@@ -1,7 +1,7 @@
 load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 
 cc_library(
-    name = "libmodbus",
+    name = "modbus",
     srcs = glob(["src/*.c"]) + [
         ":generate_config_h",
         ":generate_modbus_version_h",
@@ -9,6 +9,37 @@ cc_library(
     hdrs = glob(["src/*.h"]),
     copts = ["-DHAVE_CONFIG_H"],
     includes = ["src"],
+)
+
+cc_binary(
+    name = "libmodbus.so.0",
+    srcs = [
+    ],
+    linkopts = [
+        "-Wl,-soname,libmodbus.so.0",
+        # Linker script to hide non-modbus symbols.
+        "-Wl,--version-script",
+        "$(location modbus-versionscript.lds)",
+    ],
+    linkshared = 1,
+    deps = [
+        ":modbus",
+        ":modbus-versionscript.lds",
+    ],
+)
+
+cc_library(
+    name = "modbus_shared",
+    srcs = [
+        "libmodbus.so.0",
+    ],
+    hdrs = [
+        "config.h",
+        "src/modbus.h",
+        "src/modbus-rtu.h",
+        "src/modbus-tcp.h",
+        "src/modbus-version.h",
+    ],
 )
 
 expand_template(
